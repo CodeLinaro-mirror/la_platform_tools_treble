@@ -11,6 +11,7 @@ python_library_host {
     name: "treble_build_lib",
     defaults: ["treble_build_default"],
     srcs: [
+        "sandbox/abfs.py",
         "sandbox/build_android_sandboxed.py",
         "sandbox/config.py",
         "sandbox/nsjail.py",

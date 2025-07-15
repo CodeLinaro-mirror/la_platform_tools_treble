@@ -15,6 +15,7 @@
 
 import argparse
 import os
+from . import abfs
 from . import config
 from . import nsjail
 from . import rbe
@@ -35,6 +36,7 @@ def build(build_target,
           config_file=None,
           command_wrapper=_DEFAULT_COMMAND_WRAPPER,
           use_rbe=False,
+          use_abfs=False,
           readonly_bind_mounts=[],
           env=[]):
   """Builds an Android target in a secure sandbox.
@@ -53,6 +55,7 @@ def build(build_target,
     config_file: A string path to an overlay configuration file.
     command_wrapper: A string path to the command wrapper.
     use_rbe: If true, will attempt to use RBE for the build.
+    use_abfs: If true, will attempt to build with ABFS.
     readonly_bind_mounts: A list of string paths to be mounted as read-only.
     env: An array of environment variables to define in the NsJail sandbox in
       the `var=val` syntax.
@@ -91,6 +94,10 @@ def build(build_target,
     readonly_bind_mounts.extend(rbe.get_readonlybind_mounts())
     nsjail_wrapper = rbe.get_nsjail_bin_wrapper()
 
+  bind_mounts = []
+  if use_abfs:
+    bind_mounts.extend(abfs.get_bind_mounts())
+
   ret = nsjail.run(
       nsjail_bin=nsjail_bin,
       chroot=chroot,
@@ -103,6 +110,7 @@ def build(build_target,
       max_cpus=max_cpus,
       extra_nsjail_args=extra_nsjail_args,
       readonly_bind_mounts=readonly_bind_mounts,
+      extra_bind_mounts=bind_mounts,
       env=env,
       nsjail_wrapper=nsjail_wrapper)
 
@@ -176,6 +184,8 @@ def arg_parser():
       'configuration.')
   parser.add_argument(
       '--use_rbe', action='store_true', help='Executes the build on RBE')
+  parser.add_argument(
+      '--use_abfs', action='store_true', help='Executes the build on ABFS')
   return parser
 
 
@@ -217,6 +227,7 @@ def main():
       build_id=args['build_id'],
       max_cpus=args['max_cpus'],
       use_rbe=args['use_rbe'],
+      use_abfs=args['use_abfs'],
       build_goals=build_goals + build_flags)
 
 
