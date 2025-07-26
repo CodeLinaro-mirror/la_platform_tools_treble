@@ -37,6 +37,7 @@ def build(build_target,
           command_wrapper=_DEFAULT_COMMAND_WRAPPER,
           use_rbe=False,
           use_abfs=False,
+          abfs_chroot='',
           readonly_bind_mounts=[],
           env=[]):
   """Builds an Android target in a secure sandbox.
@@ -95,13 +96,18 @@ def build(build_target,
     nsjail_wrapper = rbe.get_nsjail_bin_wrapper()
 
   bind_mounts = []
+  overlay_config = config_file
   if use_abfs:
     bind_mounts.extend(abfs.get_bind_mounts())
+    # Clear overlay config file so nsjail can mount build root directory into /src directly.
+    overlay_config = None
+    if abfs_chroot:
+      source_dir = os.path.join(source_dir, abfs_chroot)
 
   ret = nsjail.run(
       nsjail_bin=nsjail_bin,
       chroot=chroot,
-      overlay_config=config_file,
+      overlay_config=overlay_config,
       source_dir=source_dir,
       command=command,
       build_target=build_target,
@@ -186,6 +192,8 @@ def arg_parser():
       '--use_rbe', action='store_true', help='Executes the build on RBE')
   parser.add_argument(
       '--use_abfs', action='store_true', help='Executes the build on ABFS')
+  parser.add_argument(
+      '--abfs_chroot', help='Chroot subdirectory of ABFS')
   return parser
 
 
@@ -228,6 +236,7 @@ def main():
       max_cpus=args['max_cpus'],
       use_rbe=args['use_rbe'],
       use_abfs=args['use_abfs'],
+      abfs_chroot=args['abfs_chroot'],
       build_goals=build_goals + build_flags)
 
 
