@@ -350,6 +350,7 @@ def get_kati_makefiles(kati_stamp_file, overlays):
         # The ckati stamp file always includes a line for the ckati bin at
         # the beginnning.
         "bin/ckati",
+        "bin/rkati",
     ]
     return (all([not makefile.startswith(p) for p in banned_prefixes]) and
             all([not makefile.endswith(s) for s in banned_suffixes]))
