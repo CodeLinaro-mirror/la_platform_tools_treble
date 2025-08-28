@@ -22,4 +22,5 @@ def get_bind_mounts():
         abfs_dir = home_dir/'.abfs'
         if abfs_dir.exists():
             bind_mounts.append(f'{abfs_dir.absolute()}')
+            bind_mounts.append(f'{abfs_dir.absolute()}:/src/.abfs')
     return bind_mounts

@@ -38,6 +38,7 @@ def build(build_target,
           use_rbe=False,
           use_abfs=False,
           abfs_chroot='',
+          abfs_dist_dir='',
           readonly_bind_mounts=[],
           env=[]):
   """Builds an Android target in a secure sandbox.
@@ -103,6 +104,9 @@ def build(build_target,
     overlay_config = None
     if abfs_chroot:
       source_dir = os.path.join(source_dir, abfs_chroot)
+    if abfs_dist_dir:
+      abfs_dist_dir = os.path.abspath(abfs_dist_dir)
+      bind_mounts.append(f'{abfs_dist_dir}:/src/out/dist')
 
   ret = nsjail.run(
       nsjail_bin=nsjail_bin,
@@ -194,6 +198,8 @@ def arg_parser():
       '--use_abfs', action='store_true', help='Executes the build on ABFS')
   parser.add_argument(
       '--abfs_chroot', help='Chroot subdirectory of ABFS')
+  parser.add_argument(
+      '--abfs_dist_dir', help='Dist dir to bindmount for ABFS')
   return parser
 
 
@@ -237,6 +243,7 @@ def main():
       use_rbe=args['use_rbe'],
       use_abfs=args['use_abfs'],
       abfs_chroot=args['abfs_chroot'],
+      abfs_dist_dir=args['abfs_dist_dir'],
       build_goals=build_goals + build_flags)
 
 
