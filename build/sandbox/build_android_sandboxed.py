@@ -14,7 +14,9 @@
 """Builds an Android target in a secure sandbox."""
 
 import argparse
+import glob
 import os
+import shutil
 from . import abfs
 from . import config
 from . import nsjail
@@ -23,6 +25,21 @@ from . import rbe
 _DEFAULT_COMMAND_WRAPPER = \
   '/src/tools/treble/build/sandbox/build_android_target.sh'
 
+
+def _recursive_copy(source_dir, target_dir):
+  source_items = glob.glob(os.path.join(source_dir, "*"))
+
+  for item_path in source_items:
+      item_name = os.path.basename(item_path)
+      target_item_path = os.path.join(target_dir, item_name)
+
+      try:
+          if os.path.isdir(item_path):
+              shutil.copytree(item_path, target_item_path, dirs_exist_ok=True)
+          elif os.path.isfile(item_path):
+              shutil.copy2(item_path, target_item_path)
+      except OSError as e:
+          print(f"Error copying {item_path} to {target_item_path}: {e}")
 
 def build(build_target,
           release_target,
@@ -104,9 +121,6 @@ def build(build_target,
     overlay_config = None
     if abfs_chroot:
       source_dir = os.path.join(source_dir, abfs_chroot)
-    if abfs_dist_dir:
-      abfs_dist_dir = os.path.abspath(abfs_dist_dir)
-      bind_mounts.append(f'{abfs_dist_dir}:/src/out/dist')
 
   ret = nsjail.run(
       nsjail_bin=nsjail_bin,
@@ -123,6 +137,9 @@ def build(build_target,
       extra_bind_mounts=bind_mounts,
       env=env,
       nsjail_wrapper=nsjail_wrapper)
+
+  if use_abfs and abfs_dist_dir:
+    _recursive_copy(os.path.join(source_dir, 'out/dist'), os.path.abspath(abfs_dist_dir))
 
   cleanup()
 
