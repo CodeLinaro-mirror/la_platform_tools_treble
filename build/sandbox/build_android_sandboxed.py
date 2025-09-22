@@ -15,6 +15,7 @@
 
 import argparse
 import glob
+import logging
 import os
 import shutil
 from . import abfs
@@ -39,7 +40,8 @@ def _recursive_copy(source_dir, target_dir):
           elif os.path.isfile(item_path):
               shutil.copy2(item_path, target_item_path)
       except OSError as e:
-          print(f"Error copying {item_path} to {target_item_path}: {e}")
+          logging.error(f"Error copying {item_path} to {target_item_path}: {e}")
+          raise e
 
 def build(build_target,
           release_target,
