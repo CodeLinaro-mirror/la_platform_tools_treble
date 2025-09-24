@@ -21,15 +21,19 @@ import subprocess
 import tempfile
 
 from build_chd_debug_ramdisk import build_chd_debug_ramdisk, ImageOptions
-from build_chd_utils import copy_files, merge_chd_sepolicy, unzip_otatools
+from build_chd_utils import (copy_files,
+                             merge_chd_sepolicy,
+                             merge_vendor_boot_chd_debug,
+                             unzip_otatools)
 
 """Test command:
 
 WORKSPACE=out/dist && \
 python3 tools/treble/cuttlefish/build_cf_hybrid_device.py \
     --build_id 123456 \
-    --otatools_zip $WORKSPACE/otatools.zip \
     --target chd-target \
+    --variant userdebug \
+    --otatools_zip $WORKSPACE/otatools.zip \
     --output_dir $WORKSPACE \
     --framework_target_files_zip $WORKSPACE/device-target_files-*.zip \
     --vendor_target_files_zip $WORKSPACE/cf_arm64_only_phone-target_files-*.zip
@@ -48,6 +52,10 @@ def _parse_args() -> argparse.Namespace:
                       help='Build id.')
   parser.add_argument('--target', required=True,
                       help='Target name of the cuttlefish hybrid build.')
+  # TODO(b/443854197): Make this flag as required once users are ready to use
+  # the binary with this flag.
+  parser.add_argument('--variant', default='',
+                      help='Variant of the build, such as user or userdebug')
   parser.add_argument('--otatools_zip', required=True,
                       help='Path to the otatools.zip.')
   parser.add_argument('--output_dir', required=True,
@@ -128,6 +136,8 @@ def run(temp_dir: str) -> None:
     # file name that property init expects.
     files_to_add.append(f'{chd_debug_prop}:adb_debug.prop')
 
+  # TODO(b/443854197): Refactor CHD image build procedure, once users are ready
+  # to pass variant argument.
   cf_debug_img = os.path.join(args.output_dir, 'vendor_boot-debug.img')
   chd_debug_image_userdebug = 'vendor_boot-chd_debug.img'
   chd_debug_image_user = 'vendor_boot-chd_debug_user.img'
@@ -152,6 +162,19 @@ def run(temp_dir: str) -> None:
         build_chd_debug_ramdisk(image_option)
       except Exception as error:
         print(f'Warning - cannot build {image_name}: {error}')
+
+  chd_debug_img_path = None
+  if args.variant == "user":
+    chd_debug_img_path = os.path.join(args.output_dir, chd_debug_image_user)
+  elif args.variant == "userdebug":
+    chd_debug_img_path = os.path.join(args.output_dir,
+                                      chd_debug_image_userdebug)
+  if chd_debug_img_path:
+    img_with_chd_debug_zip_path = \
+        os.path.join(args.output_dir,
+                     f"{args.target}-img_with_chd_debug{build_id_str}.zip")
+    merge_vendor_boot_chd_debug(img_zip_path, chd_debug_img_path,
+                                img_with_chd_debug_zip_path)
 
 
 if __name__ == '__main__':
