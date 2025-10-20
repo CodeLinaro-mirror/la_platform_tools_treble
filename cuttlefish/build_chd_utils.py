@@ -210,3 +210,23 @@ def merge_chd_sepolicy(
 
     subprocess.run(merge_cmd, check=True)
     return merged_policy
+
+
+def merge_vendor_boot_chd_debug(images_zip: str,
+                                vendor_boot_chd_debug_image: str,
+                                output_zip: str) -> None:
+  """Merge vendor_boot-chd_debug image into images zip file for CHD.
+
+  Args:
+    images_zip: A path to the images zip archive.
+    vendor_boot_chd_debug_image: A path to the vendor_boot-chd_debug image.
+    output_zip: The output images zip archive, with replacing vendor_boot image
+                into vendor_boot-chd_debug image.
+  """
+
+  with zipfile.ZipFile(images_zip, 'r') as src, \
+       zipfile.ZipFile(output_zip, 'w') as dst:
+    for item in src.infolist():
+      if item.filename != "vendor_boot.img":
+        dst.writestr(item, src.read(item.filename))
+    dst.write(vendor_boot_chd_debug_image, arcname='vendor_boot.img')
