@@ -112,7 +112,7 @@ def build(build_target,
     cleanup = rbe.setup(env)
     env = rbe.prepare_env(env)
     extra_nsjail_args.extend(rbe.get_extra_nsjail_args())
-    readonly_bind_mounts.extend(rbe.get_readonlybind_mounts())
+    readonly_bind_mounts.extend(rbe.get_readonlybind_mounts(env))
     nsjail_wrapper = rbe.get_nsjail_bin_wrapper()
 
   bind_mounts = []
