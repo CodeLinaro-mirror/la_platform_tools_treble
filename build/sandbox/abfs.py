@@ -14,6 +14,7 @@
 
 """Utilities for ABFS-enabled builds."""
 from pathlib import Path
+import resource
 
 def get_bind_mounts():
     bind_mounts = []
@@ -24,3 +25,23 @@ def get_bind_mounts():
             bind_mounts.append(f'{abfs_dir.absolute()}')
             bind_mounts.append(f'{abfs_dir.absolute()}:/src/.abfs')
     return bind_mounts
+
+def ensure_ulimit_nofile(min_limit=65536):
+    """
+    Check if limit of file read open is enough, and increase if not.
+    """
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if soft >= min_limit:
+        return
+
+    try:
+        # Calculate new limit
+        new_hard = max(hard, min_limit)
+
+        # Apply new soft limit
+        resource.setrlimit(resource.RLIMIT_NOFILE, (min_limit, new_hard))
+        print(f" Successfully applied a new RLIMIT_NOFILE value: {min_limit, new_hard}")
+    except ValueError as e:
+        print(f" Failed to apply a new RLIMIT_NOFILE value: {e}")
+    except Exception as e:
+        print(f" Unexpected exception while applying a new value: {e}")
