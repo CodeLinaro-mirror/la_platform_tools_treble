@@ -92,7 +92,10 @@ def prepare_env(env):
   # Input parameter variables take precedence over everything else
   prepared_env.update(env_array_to_dict(env))
 
-  if 'RBE_use_gce_credentials' not in prepared_env:
+  if 'RBE_use_gce_credentials' in prepared_env:
+    prepared_env['GCE_METADATA_HOST'] = '169.254.169.254'
+    prepared_env['NO_PROXY'] = '169.254.169.254'
+  else:
     # Use application default credentials if it is not requested to use GCE credentials
     prepared_env['RBE_use_application_default_credentials'] = 'true'
 
