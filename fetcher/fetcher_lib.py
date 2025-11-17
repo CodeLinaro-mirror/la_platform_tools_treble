@@ -19,6 +19,7 @@ from googleapiclient.errors import HttpError
 
 import httplib2
 from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.client import GoogleCredentials
 
 _SCOPE_URL = 'https://www.googleapis.com/auth/androidbuild.internal'
 _DEF_JSON_KEYFILE = '.config/gcloud/application_default_credentials.json'
@@ -138,6 +139,21 @@ def create_client_from_p12(robot_credentials_file, robot_username):
     An authorized android build api client.
   """
   http = _create_http_from_p12(robot_credentials_file, robot_username)
+  return create_client(http)
+
+def create_client_from_metadata():
+  """Creates an Android build api client from metadata.
+
+  Returns:
+    An authorized android build api client.
+  """
+  credentials = GoogleCredentials.get_application_default()
+
+  credentials = credentials.create_scoped(_SCOPE_URL)
+
+  http = httplib2.Http()
+  credentials.authorize(http)
+
   return create_client(http)
 
 

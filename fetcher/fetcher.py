@@ -38,8 +38,7 @@ def main():
   group.add_argument('--build_id', help='Download from the specified build.')
 
   args = parser.parse_args()
-  client = fetcher_lib.create_client_from_json_keyfile(
-      json_keyfile_name=args.json_keyfile)
+  client = fetcher_lib.create_client_from_metadata()
 
   build_id = fetcher_lib.get_latest_build_id(
       client=client, branch=args.branch,

@@ -31,7 +31,6 @@ _RBE_ENV = {
     'FLAG_server_address': 'unix:///tmp/reproxy_%s.sock' % random.randint(0,100000),
     'FLAG_exec_root': '/src',
     'FLAG_invocation_id': 'treble-%s' % random.randint(0,100000),
-    'RBE_use_application_default_credentials': 'true',
     'RBE_reproxy_wait_seconds': '20',
     'RBE_output_dir': 'out',
     'RBE_proxy_log_dir': 'out',
@@ -93,6 +92,10 @@ def prepare_env(env):
   # Input parameter variables take precedence over everything else
   prepared_env.update(env_array_to_dict(env))
 
+  if 'RBE_use_gce_credentials' not in prepared_env:
+    # Use application default credentials if it is not requested to use GCE credentials
+    prepared_env['RBE_use_application_default_credentials'] = 'true'
+
   if 'RBE_instance' not in prepared_env:
     raise EnvironmentError('The RBE_instance environment '
                            'variables must be defined')
@@ -104,8 +107,13 @@ def prepare_env(env):
   return ['%s=%s' % (k,v) for k,v in prepared_env.items()]
 
 
-def get_readonlybind_mounts():
+def get_readonlybind_mounts(env):
   """Returns a dictionary of readonly bind mounts"""
+
+  # Do not bind mount credential file if GCE credential will be used.
+  if 'RBE_use_gce_credentials=true' in env:
+    return []
+
   creds_file = '.config/gcloud/application_default_credentials.json'
   # Bind the gcloud credentials file, if present, to authenticate.
   source_creds_file = os.path.join(os.getenv('HOME'), creds_file)
