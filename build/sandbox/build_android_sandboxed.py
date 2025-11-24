@@ -26,6 +26,8 @@ from . import rbe
 _DEFAULT_COMMAND_WRAPPER = \
   '/src/tools/treble/build/sandbox/build_android_target.sh'
 
+_DEFAULT_OPEN_FILE_LIMIT = 65536
+
 
 def _recursive_copy(source_dir, target_dir):
   source_items = glob.glob(os.path.join(source_dir, "*"))
@@ -121,6 +123,7 @@ def build(build_target,
     bind_mounts.extend(abfs.get_bind_mounts())
     # Clear overlay config file so nsjail can mount build root directory into /src directly.
     overlay_config = None
+    abfs.ensure_ulimit_nofile(_DEFAULT_OPEN_FILE_LIMIT)
     if abfs_chroot:
       source_dir = os.path.join(source_dir, abfs_chroot)
 
